@@ -8,12 +8,12 @@
   <!-- Begin Basic Settings: Add-in metadata, used for all versions of Office unless override provided. -->
   <Id>12345678-1234-1234-1234-123456789012</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>Your Company Name</ProviderName>
+  <ProviderName>SR</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   
   <!-- The display name of your add-in. Used on the store and various places of the Office UI such as the add-ins dialog. -->
   <DisplayName DefaultValue="Contact Form Add-in" />
-  <Description DefaultValue="A simple form to capture contact information and create emails in Outlook." />
+  <Description DefaultValue="A simple form to capture information and create emails in Outlook." />
   <IconUrl DefaultValue="https://mcheck.github.io/srform/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://mcheck.github.io/srform/icon-128.png" />
   <SupportUrl DefaultValue="https://mcheck.github.io/srform/support" />
