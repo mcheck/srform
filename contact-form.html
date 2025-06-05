@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form Add-in</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 400px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #323130;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #323130;
+            font-size: 14px;
+        }
+        
+        input[type="text"], input[type="tel"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus, input[type="tel"]:focus {
+            outline: none;
+            border-color: #0078d4;
+            box-shadow: 0 0 0 1px #0078d4;
+        }
+        
+        .btn-primary {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #106ebe;
+        }
+        
+        .btn-primary:disabled {
+            background-color: #a6a6a6;
+            cursor: not-allowed;
+        }
+        
+        .status-message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .success {
+            background-color: #dff6dd;
+            color: #107c10;
+            border: 1px solid #92c353;
+        }
+        
+        .error {
+            background-color: #fde7e9;
+            color: #d13438;
+            border: 1px solid #d13438;
+        }
+        
+        .loading {
+            background-color: #e1f5fe;
+            color: #0078d4;
+            border: 1px solid #0078d4;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Contact Information Form</h2>
+            <p>Fill out the form below to create an email with contact details</p>
+        </div>
+        
+        <form id="contactForm">
+            <div class="form-group">
+                <label for="contactName">Full Name *</label>
+                <input type="text" id="contactName" name="contactName" required placeholder="Enter full name">
+            </div>
+            
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number *</label>
+                <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="Enter phone number">
+            </div>
+            
+            <button type="submit" class="btn-primary" id="submitBtn">
+                Create Email
+            </button>
+        </form>
+        
+        <div id="statusMessage" class="status-message hidden"></div>
+    </div>
+
+    <script>
+        // Initialize Office Add-in
+        Office.onReady((info) => {
+            if (info.host === Office.HostType.Outlook) {
+                console.log('Outlook add-in loaded successfully');
+                initializeForm();
+            }
+        });
+
+        function initializeForm() {
+            const form = document.getElementById('contactForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMessage = document.getElementById('statusMessage');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('contactName').value.trim();
+                const phone = document.getElementById('phoneNumber').value.trim();
+                
+                if (!name || !phone) {
+                    showStatus('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                await handleFormSubmission(name, phone);
+            });
+        }
+
+        async function handleFormSubmission(name, phone) {
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            try {
+                // Disable button and show loading
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating Email...';
+                showStatus('Processing your request...', 'loading');
+                
+                // Create email content
+                const emailSubject = `Contact Information: ${name}`;
+                const emailBody = createEmailBody(name, phone);
+                
+                // Use Office.js to create a new email
+                await createOutlookEmail(emailSubject, emailBody);
+                
+                showStatus('Email created successfully! Check your compose window.', 'success');
+                
+                // Reset form
+                document.getElementById('contactForm').reset();
+                
+            } catch (error) {
+                console.error('Error creating email:', error);
+                showStatus('Error creating email. Please try again.', 'error');
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Email';
+            }
+        }
+
+        function createEmailBody(name, phone) {
+            return `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px;">
+                <h3 style="color: #0078d4; margin-bottom: 20px;">New Contact Information</h3>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr style="background-color: #f8f9fa;">
+                        <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; width: 150px;">
+                            Full Name:
+                        </td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">
+                            ${escapeHtml(name)}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">
+                            Phone Number:
+                        </td>
+                        <td style="padding: 12px; border: 1px solid #dee2e6;">
+                            <a href="tel:${escapeHtml(phone)}" style="color: #0078d4; text-decoration: none;">
+                                ${escapeHtml(phone)}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+                
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                    <em>This email was generated automatically from the Contact Form add-in.</em>
+                </p>
+            </div>
+            `;
+        }
+
+        async function createOutlookEmail(subject, htmlBody) {
+            return new Promise((resolve, reject) => {
+                // Check if we're in compose mode or need to create new email
+                if (Office.context.mailbox.item) {
+                    // We're in an existing email, update it
+                    Office.context.mailbox.item.subject.setAsync(subject, (result) => {
+                        if (result.status === Office.AsyncResultStatus.Succeeded) {
+                            Office.context.mailbox.item.body.setAsync(
+                                htmlBody,
+                                { coercionType: Office.CoercionType.Html },
+                                (bodyResult) => {
+                                    if (bodyResult.status === Office.AsyncResultStatus.Succeeded) {
+                                        resolve();
+                                    } else {
+                                        reject(new Error('Failed to set email body'));
+                                    }
+                                }
+                            );
+                        } else {
+                            reject(new Error('Failed to set email subject'));
+                        }
+                    });
+                } else {
+                    // Create a new email (this requires the user to manually create a new email first)
+                    // In a production app, you'd use Microsoft Graph API to create emails programmatically
+                    reject(new Error('Please create a new email first, then use this add-in'));
+                }
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.classList.remove('hidden');
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Handle form validation
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('input[required]');
+            inputs.forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('input', clearFieldError);
+            });
+        });
+
+        function validateField(e) {
+            const field = e.target;
+            if (!field.value.trim()) {
+                field.style.borderColor = '#d13438';
+            } else {
+                field.style.borderColor = '#d1d1d1';
+            }
+        }
+
+        function clearFieldError(e) {
+            e.target.style.borderColor = '#d1d1d1';
+        }
+    </script>
+</body>
+</html>
